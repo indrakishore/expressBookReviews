@@ -38,20 +38,27 @@ public_users.get('/',function (req, res) {
   res.send(JSON.stringify(books,null,4));
 });
 
+
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
+public_users.get('/isbn/:isbn', function (req, res) {
   // Retrieve ISBN from request parameters
   const isbn = req.params.isbn;
 
-  // Check if the book with the given ISBN exists
-  if (books.hasOwnProperty(isbn)) {
-      // If the book exists, send its details in the response
-      res.status(200).json(books[isbn]);
-  } else {
-      // If the book doesn't exist, send an error message
-      res.status(404).json({ message: "Book not found" });
-  }
- });
+  // console.log("Requested ISBN:", isbn); 
+  console.log("Requested ISBN:", isbn);
+ // Check if any book in the 'books' object has the provided 'isbn'
+const foundBook = Object.values(books).find(book => book.isbn === isbn);
+
+if (foundBook) {
+    console.log("Book found:", foundBook);
+    res.status(200).json(foundBook); // Send book details in response
+} else {
+    console.log("Book not found");
+    res.status(404).json({ message: "Book not found" }); // Send error message
+}
+});
+
+
   
 // Get book details based on author
 public_users.get('/author/:author',function (req, res) {
@@ -98,15 +105,12 @@ public_users.get('/title/:title',function (req, res) {
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
-  //Write your code here
-  //obtain the isbn from request parameters
   const isbn = req.params.isbn;
-
-  //check if the book with isbn exist in db
-  if(books.hasOwnProperty(isbn)){
-    //if exist, retrive its reviews
-    const reviews = books[isbn].reviews;
-
+ // Check if any book in the 'books' object has the provided 'isbn'
+  const foundBook = Object.values(books).find(book => book.isbn === isbn);
+  if (foundBook) {
+      //if exist, retrive its reviews
+    const reviews = foundBook.reviews;
     if(Object.keys(reviews).length > 0){
       res.status(200).json(reviews);
     } else {
@@ -116,6 +120,7 @@ public_users.get('/review/:isbn',function (req, res) {
     //if the book with the provided isbn doesnot exist
     res.status(404).json({message: "Book not found"});
   }
+    
 });
 
 module.exports.general = public_users;
