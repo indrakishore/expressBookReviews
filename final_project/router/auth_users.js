@@ -97,37 +97,69 @@ regd_users.post('/auth/add-isbn', (req, res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  // Log the request body to see if it's being parsed correctly
-  console.log("Request Body:", req.body);
-
-  // Extract the username from the session
-  const username = req.session.authorization.username;
   const isbn = req.params.isbn;
+  const username = req.session.authorization.username; // Assuming the username is stored in the session
   const review = req.body.review;
 
-  console.log("Review:", review);
-
+  // Check if the user is authenticated
   if (!username) {
-    return res.status(401).json({ message: "User not authenticated." });
+      return res.status(401).json({ message: "User not authenticated." });
   }
 
+  // Check if review text is provided
   if (!review) {
-    return res.status(400).json({ message: "Review text is required." });
+      return res.status(400).json({ message: "Review text is required." });
   }
 
-  // Check if the book exists in the db
-  if (!books.hasOwnProperty(isbn)) {
-    return res.status(404).json({ message: "Book not found" });
+  // Check if the book exists in the database
+  const foundBook = Object.values(books).find(book => book.isbn === isbn);
+  if (!foundBook) {
+      return res.status(404).json({ message: "Book not found" });
   }
+
+  // Ensure that the book has a reviews property and initialize it if it doesn't exist
+  foundBook.reviews = foundBook.reviews || {};
 
   // Add or modify the review
-  books[isbn].reviews[username] = review;
+  foundBook.reviews[username] = review;
 
   return res.status(200).json({ message: "Review added/modified successfully." });
 });
 
 
 
+
+
+//delete review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+  const username = req.session.authorization.username; // Corrected
+
+  // Check if the user is logged in
+  if (!username) {
+      return res.status(401).json({ message: "Unauthorized: You need to log in to delete a review" });
+  }
+
+  // Check if any book in the 'books' object has the provided 'isbn'
+  const foundBook = Object.values(books).find(book => book.isbn === isbn);
+  if (foundBook) {
+      // Check if the book has reviews
+      if (foundBook.reviews) {
+          // Check if the user has a review for this book
+          if (foundBook.reviews.hasOwnProperty(username)) {
+              // Delete the user's review for this book
+              delete foundBook.reviews[username];
+              return res.status(200).json({ message: "Review deleted successfully" });
+          } else {
+              return res.status(404).json({ message: "No review found for this user and book combination" });
+          }
+      } else {
+          return res.status(404).json({ message: "No reviews found for this book" });
+      }
+  } else {
+      return res.status(404).json({ message: "Book not found" });
+  }
+});
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
