@@ -1,5 +1,6 @@
 const express = require('express');
 let books = require("./booksdb.js");
+const axios = require('axios');
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
@@ -32,14 +33,30 @@ public_users.post("/register", (req,res) => {
   return res.status(404).json({message: "Unable to register user."});
 });
 
-// Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  //Write your code here
+// Task 1: Get the book list available in the shop
+// public_users.get('/',function (req, res) {
+//   //Write your code here
+//   res.send(JSON.stringify(books,null,4));
+// });
+
+// Handle GET request for '/customer'
+public_users.get('/', (req, res) => {
   res.send(JSON.stringify(books,null,4));
 });
 
+// Task 10:
+// Get the book list available in the shop using async-await with Axios
+public_users.get('/books', async function (req, res) {
+  try {
+    const response = await axios.get('http://localhost:5000/customer');
+    const books = response.data; // Assuming the books are returned in the response
+    res.status(200).json(books);
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
 
-// Get book details based on ISBN
+//Task 2:Get book details based on ISBN
 public_users.get('/isbn/:isbn', function (req, res) {
   // Retrieve ISBN from request parameters
   const isbn = req.params.isbn;
@@ -58,9 +75,21 @@ if (foundBook) {
 }
 });
 
+// Task 11:
+// Get book details based on ISBN using async-await with Axios
+public_users.get('/isbn/:isbn', async function (req, res) {
+  try {
+    const isbn = req.params.isbn;
+    const response = await axios.get(`http://localhost:5000/customer/isbn/${isbn}`);
+    const foundBook = response.data;
+    res.status(200).json(foundBook);
+  } catch (error) {
+    res.status(404).json({ message: "Book not found" });
+  }
+});
 
   
-// Get book details based on author
+// Task 3: Get book details based on author
 public_users.get('/author/:author',function (req, res) {
   //Write your code here
   //obtain the author from request parameters
@@ -76,6 +105,18 @@ public_users.get('/author/:author',function (req, res) {
     }
   }
 
+  // Task 12: Get book details based on author using async-await with Axios
+public_users.get('/author-async/:author', async function (req, res) {
+  try {
+    const author = req.params.author;
+    const response = await axios.get(`http://localhost:5000/customer/author/${author}`);
+    const books = response.data;
+    res.status(200).json(books);
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
   //check if any books were found for the provided author
   if(booksByAuthor.length > 0){
     res.status(200).json({"Books by this author":booksByAuthor});
@@ -84,7 +125,7 @@ public_users.get('/author/:author',function (req, res) {
   }
 });
 
-// Get all books based on title
+//Task 4: Get all books based on title
 public_users.get('/title/:title',function (req, res) {
   //Write your code here
   //Obtain the title from request parameters
@@ -102,6 +143,18 @@ public_users.get('/title/:title',function (req, res) {
   }
 
 });
+
+// Task 13: Get book details based on title using async-await with Axios
+public_users.get('/title-async/:title', async function (req, res) {
+  try {
+    const title = req.params.title;
+    const response = await axios.get(`http://localhost:5000/customer/title/${title}`);
+    res.send(response.data);
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
